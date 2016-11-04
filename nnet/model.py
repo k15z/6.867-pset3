@@ -39,6 +39,16 @@ class Model:
 			losses += [loss]
 		return losses
 
+	def score(self, x, y):
+		wrong = 0.0
+		total = 0.0
+		output = self.predict(x)
+		for i, y_i in enumerate(y):
+			total += 1.0
+			if np.argmax(y_i) != np.argmax(output[i]):
+				wrong += 1.0
+		return 1.0 - wrong / total
+
 	def predict(self, x):
 		assert x.shape[1] == self.layers[0].input_dims
 

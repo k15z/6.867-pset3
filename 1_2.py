@@ -2,40 +2,57 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load dataset
-data = np.loadtxt("data/data_3class.csv")
-x = data[:,:2]
-y = np.zeros((x.shape[0], 3))
-for i, y_i in enumerate(data[:,2:]):
-	y[i, int(y_i)] = 1.0
+dataset_id = "1"
+
+train = np.loadtxt('data/data' + dataset_id + '_train.csv')
+x_train = train[:,0:2]
+y_train = np.zeros((train.shape[0], 2))
+for i, y_i in enumerate(train[:,2:3]):
+    y_train[i, int((y_i+1)/2)] = 1.0
+
+test = np.loadtxt('data/data' + dataset_id + '_test.csv')
+x_test = test[:,0:2]
+y_test = np.zeros((test.shape[0], 2))
+for i, y_i in enumerate(test[:,2:3]):
+    y_test[i, int((y_i+1)/2)] = 1.0
+
+val = np.loadtxt('data/data' + dataset_id + '_validate.csv')
+x_val = val[:,0:2]
+y_val = np.zeros((val.shape[0], 2))
+for i, y_i in enumerate(val[:,2:3]):
+    y_val[i, int((y_i+1)/2)] = 1.0
 
 # Build model
 if True:
     import nnet
     import nnet.layers
     model = nnet.Model([
-        nnet.layers.ReLU(2, 5),
-        nnet.layers.ReLU(5, 10),
-        nnet.layers.Softmax(10, 3)
+        nnet.layers.ReLU(2, 50),
+        nnet.layers.ReLU(50, 50),
+        nnet.layers.Softmax(50, 2)
     ], loss='xentropy')
 
     prev_score = 0.0
-    new_score = model.score(x, y)
+    new_score = model.score(x_train, y_train)
     while new_score > prev_score:
-        model.fit(x, y, epochs=64)
+        model.fit(x_train, y_train, epochs=64)
         prev_score = new_score
-        new_score = model.score(x, y)
-        print(new_score)
-    print("Done.")
+        new_score = model.score(x_train, y_train)
+        print("train", new_score)
+        print("test", model.score(x_test, y_test))
+        print("val", model.score(x_val, y_val))
+        print("")
 else:
     from keras.models import Sequential
     from keras.layers import Dense, Activation
     model = Sequential()
     model.add(Dense(5, input_dim=2, activation='relu'))
-    model.add(Dense(10, activation='relu'))
-    model.add(Dense(3, activation='softmax'))
+    model.add(Dense(2, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
-    model.fit(x, y)
-    print(model.score(x, y))
+    model.fit(x_train, y_train)
+    print("train", model.score(x_train, y_train))
+    print("test", model.score(x_test, y_test))
+    print("val", model.score(x_val, y_val))
 
 # Plot results
 def plotDecisionBoundary(X, Y, scoreFn, values, title = ""):
@@ -53,18 +70,6 @@ def plotDecisionBoundary(X, Y, scoreFn, values, title = ""):
     CS = plt.contour(xx, yy, zz, values, colors = 'red', linestyles = 'solid', linewidths = 2)
     plt.clabel(CS, fontsize=9, inline=1)
 
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-    zz = np.array([scoreFn(x)[1] for x in np.c_[xx.ravel(), yy.ravel()]])
-    zz = zz.reshape(xx.shape)
-    CS = plt.contour(xx, yy, zz, values, colors = 'green', linestyles = 'solid', linewidths = 2)
-    plt.clabel(CS, fontsize=9, inline=1)
-
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-    zz = np.array([scoreFn(x)[2] for x in np.c_[xx.ravel(), yy.ravel()]])
-    zz = zz.reshape(xx.shape)
-    CS = plt.contour(xx, yy, zz, values, colors = 'blue', linestyles = 'solid', linewidths = 2)
-    plt.clabel(CS, fontsize=9, inline=1)
-
     plt.scatter(X[:, 0], X[:, 1], c=(1.-Y), s=50, cmap = plt.cm.cool)
     plt.title(title)
     plt.axis('tight')
@@ -72,6 +77,6 @@ def plotDecisionBoundary(X, Y, scoreFn, values, title = ""):
 def predictOne(x_i):
 	output = model.predict(np.array([x_i]))
 	return output.flatten()
-plotDecisionBoundary(x, data[:,2], predictOne, [0.5])
+plotDecisionBoundary(x_train, train[:,2:3], predictOne, [0.5])
 plt.tight_layout()
 plt.show()
