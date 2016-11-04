@@ -1,8 +1,10 @@
+import nnet
+import nnet.layers
 import numpy as np
 import matplotlib.pyplot as plt
 
 # Load dataset
-dataset_id = "1"
+dataset_id = "4"
 
 train = np.loadtxt('data/data' + dataset_id + '_train.csv')
 x_train = train[:,0:2]
@@ -23,36 +25,22 @@ for i, y_i in enumerate(val[:,2:3]):
     y_val[i, int((y_i+1)/2)] = 1.0
 
 # Build model
-if True:
-    import nnet
-    import nnet.layers
-    model = nnet.Model([
-        nnet.layers.ReLU(2, 50),
-        nnet.layers.ReLU(50, 50),
-        nnet.layers.Softmax(50, 2)
-    ], loss='xentropy')
+model = nnet.Model([
+    nnet.layers.ReLU(2, 50),
+    nnet.layers.ReLU(50, 50),
+    nnet.layers.Softmax(50, 2)
+], loss='xentropy')
 
-    prev_score = 0.0
+prev_score = 0.0
+new_score = model.score(x_train, y_train)
+while new_score > prev_score:
+    model.fit(x_train, y_train, epochs=64)
+    prev_score = new_score
     new_score = model.score(x_train, y_train)
-    while new_score > prev_score:
-        model.fit(x_train, y_train, epochs=64)
-        prev_score = new_score
-        new_score = model.score(x_train, y_train)
-        print("train", new_score)
-        print("test", model.score(x_test, y_test))
-        print("val", model.score(x_val, y_val))
-        print("")
-else:
-    from keras.models import Sequential
-    from keras.layers import Dense, Activation
-    model = Sequential()
-    model.add(Dense(5, input_dim=2, activation='relu'))
-    model.add(Dense(2, activation='softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
-    model.fit(x_train, y_train)
-    print("train", model.score(x_train, y_train))
+    print("train", new_score)
     print("test", model.score(x_test, y_test))
     print("val", model.score(x_val, y_val))
+    print("")
 
 # Plot results
 def plotDecisionBoundary(X, Y, scoreFn, values, title = ""):
