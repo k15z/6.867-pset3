@@ -9,17 +9,17 @@ x_val, y_val = [], []
 for i in range(10):
     data = np.loadtxt('data/mnist_digit_' + str(i) + '.csv')
 
-    x_train.append(data[0:200] * 2.0 / 255.0 - 1.0)
-    arr = np.zeros((200, 10))
+    x_train.append(data[0:500] * 2.0 / 255.0 - 1.0)
+    arr = np.zeros((500, 10))
     arr[:,i] = 1.0
     y_train.append(arr)
 
-    x_test.append(data[200:350] * 2.0 / 255.0 - 1.0)
+    x_test.append(data[500:650] * 2.0 / 255.0 - 1.0)
     arr = np.zeros((150, 10))
     arr[:,i] = 1.0
     y_test.append(arr)
 
-    x_val.append(data[350:500] * 2.0 / 255.0 - 1.0)
+    x_val.append(data[650:800] * 2.0 / 255.0 - 1.0)
     arr = np.zeros((150, 10))
     arr[:,i] = 1.0
     y_val.append(arr)
@@ -28,6 +28,20 @@ x_train, y_train = np.vstack(x_train), np.vstack(y_train)
 x_test, y_test = np.vstack(x_test), np.vstack(y_test)
 x_val, y_val = np.vstack(x_val), np.vstack(y_val)
 
+# Baseline
+from keras.layers import Dense
+from keras.models import Sequential
+model = Sequential()
+model.add(Dense(100, input_dim=784, activation='relu'))
+model.add(Dense(100, activation='relu'))
+model.add(Dense(10, activation='softmax'))
+model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
+model.fit(x_train, y_train)
+print(model.evaluate(x_train, y_train, verbose=False))
+print(model.evaluate(x_test, y_test, verbose=False))
+print(model.evaluate(x_val, y_val, verbose=False))
+
+"""
 # Build model
 model = nnet.Model([
     nnet.layers.ReLU(784, 50),
@@ -45,3 +59,4 @@ while new_score >= prev_score:
     print(model.predict(x_train)[0])
     print(model.predict(x_train)[500])
     print("")
+"""
