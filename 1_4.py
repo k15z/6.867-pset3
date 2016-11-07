@@ -3,6 +3,7 @@ import nnet
 import nnet.layers
 import numpy as np
 import matplotlib.pyplot as plt
+from keras.regularizers import l2, activity_l2
 
 # Load dataset
 x_train, y_train = [], []
@@ -30,7 +31,7 @@ x_train, y_train = np.vstack(x_train), np.vstack(y_train)
 x_test, y_test = np.vstack(x_test), np.vstack(y_test)
 x_val, y_val = np.vstack(x_val), np.vstack(y_val)
 
-from keras.layers import Dense
+from keras.layers import Dense, Dropout
 from keras.models import Sequential
 def test_model(num_hidden):
     train_acc = []
@@ -40,6 +41,7 @@ def test_model(num_hidden):
     for _ in range(3):
         model = Sequential()
         model.add(Dense(num_hidden, input_dim=784, activation='relu'))
+        model.add(Dropout(0.1))
         model.add(Dense(10, activation='softmax'))
         model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
         model.fit(x_train, y_train, verbose=False)

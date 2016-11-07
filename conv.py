@@ -52,12 +52,14 @@ class ArtistConvNet:
 
 		with self.graph.as_default():
 			# Input data
-			tf_train_dataset = tf.placeholder(
+			tf_train_batch = tf.placeholder(
 			    tf.float32, shape=(batch_size, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS))
 			tf_train_labels = tf.placeholder(tf.float32, shape=(batch_size, NUM_LABELS))
 			tf_valid_dataset = tf.constant(self.val_X)
 			tf_test_dataset = tf.placeholder(
 			    tf.float32, shape=[len(self.val_X), IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS])
+			tf_train_dataset = tf.placeholder(
+				tf.float32, shape=[len(self.train_X), IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS])
 
 			# Implement dropout
 			dropout_keep_prob = tf.placeholder(tf.float32)
@@ -118,7 +120,7 @@ class ArtistConvNet:
 				return output
 
 			# Training computation
-			logits = network_model(tf_train_dataset)
+			logits = network_model(tf_train_batch)
 			loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
 
 			# Add weight decay penalty
@@ -128,9 +130,10 @@ class ArtistConvNet:
 			optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
 
 			# Predictions for the training, validation, and test data.
-			train_prediction = tf.nn.softmax(logits)
+			batch_prediction = tf.nn.softmax(logits)
 			valid_prediction = tf.nn.softmax(network_model(tf_valid_dataset))
 			test_prediction = tf.nn.softmax(network_model(tf_test_dataset))
+			train_prediction = tf.nn.softmax(network_model(tf_train_dataset))
 
 			def train_model(num_steps=num_training_steps):
 				'''Train the model with minibatches in a tensorflow session'''
@@ -144,17 +147,20 @@ class ArtistConvNet:
 						batch_labels = self.train_Y[offset:(offset + batch_size), :]
 						
 						# Data to feed into the placeholder variables in the tensorflow graph
-						feed_dict = {tf_train_dataset : batch_data, tf_train_labels : batch_labels, 
+						feed_dict = {tf_train_batch : batch_data, tf_train_labels : batch_labels, 
 									 dropout_keep_prob: dropout_prob}
 						_, l, predictions = session.run(
-						  [optimizer, loss, train_prediction], feed_dict=feed_dict)
+						  [optimizer, loss, batch_prediction], feed_dict=feed_dict)
 						if (step % 100 == 0):
+							train_preds = session.run(train_prediction, feed_dict={tf_train_dataset: self.train_X,
+																		   dropout_keep_prob : 1.0})
 							val_preds = session.run(valid_prediction, feed_dict={dropout_keep_prob : 1.0})
 							print ''
 							print('Batch loss at step %d: %f' % (step, l))
 							print('Batch training accuracy: %.1f%%' % accuracy(predictions, batch_labels))
 							print('Validation accuracy: %.1f%%' % accuracy(val_preds, self.val_Y))
-					
+							print('Full train accuracy: %.1f%%' % accuracy(train_preds, self.train_Y))
+
 					# This code is for the final question
 					if self.invariance:
 						print "\n Obtaining final results on invariance sets!"

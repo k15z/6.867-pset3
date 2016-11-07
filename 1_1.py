@@ -9,7 +9,7 @@ for i, y_i in enumerate(data[:,2:]):
 	y[i, int(y_i)] = 1.0
 
 # Build model
-if True:
+if False:
     import nnet
     import nnet.layers
     model = nnet.Model([
@@ -30,12 +30,12 @@ else:
     from keras.models import Sequential
     from keras.layers import Dense, Activation
     model = Sequential()
-    model.add(Dense(5, input_dim=2, activation='relu'))
-    model.add(Dense(10, activation='relu'))
+    model.add(Dense(1, input_dim=2, activation='relu'))
+#    model.add(Dense(10, activation='relu'))
     model.add(Dense(3, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
     model.fit(x, y)
-    print(model.score(x, y))
+    print(model.evaluate(x, y))
 
 # Plot results
 def plotDecisionBoundary(X, Y, scoreFn, values, title = ""):
